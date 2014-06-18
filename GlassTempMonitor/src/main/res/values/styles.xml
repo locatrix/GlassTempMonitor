@@ -1,12 +1,21 @@
 <resources>
 
     <style name="Meter">
-        <item name="android:layout_width">400px</item>
-        <item name="android:layout_height">150px</item>
+        <item name="android:layout_width">180px</item>
+        <item name="android:layout_height">130px</item>
         <item name="android:layout_gravity">center</item>
-        <item name="android:layout_marginTop">-17px</item>
-        <item name="android:gravity">center</item>
-        <item name="android:textSize">130px</item>
+        <item name="android:layout_marginTop">-20px</item>
+        <item name="android:gravity">left</item>
+        <item name="android:textSize">120px</item>
+    </style>
+
+    <style name="Label">
+        <item name="android:layout_width">180px</item>
+        <item name="android:layout_height">50px</item>
+        <item name="android:layout_gravity">left</item>
+        <item name="android:layout_marginTop">0px</item>
+        <item name="android:gravity">left</item>
+        <item name="android:textSize">40px</item>
     </style>
 
     <style name="MenuTheme" parent="@android:style/Theme.DeviceDefault">

@@ -9,12 +9,33 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="horizontal" >
+        android:orientation="vertical"
+        android:layout_gravity="right">
+
+        <!-- text meters -->
+        <TextView
+            android:id="@+id/cpuLabel"
+            style="@style/Label"
+            android:text="CPU (˚C)" />
 
         <TextView
             android:id="@+id/cpuTemp"
-            style="@style/Meter" />
+            style="@style/Meter"
+            android:text="30"/>
+
+        <TextView
+            android:id="@+id/batteryLabel"
+            style="@style/Label"
+            android:text="BATTERY"
+            android:layout_marginTop="20px"/>
+
+        <TextView
+            android:id="@+id/batteryTemp"
+            style="@style/Meter"
+            android:text="30"/>
 
     </LinearLayout>
+
+
+
 </FrameLayout>

@@ -83,6 +83,7 @@ public class MonitorRenderer implements DirectRenderingCallback, MonitorView.Lis
     private void update() {
         if (rendering && surfaceHolder != null) {
             monitorView.setListener(this);
+            monitorView.takeReading(); // force a reading so we redraw immediately
         } else {
             monitorView.setListener(null);
         }
