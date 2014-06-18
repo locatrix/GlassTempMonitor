@@ -1,4 +1,4 @@
-GlassCPUMeter
+GlassTempMonitor
 =============
 
-CPU temperature monitor for Google Glass
+CPU + battery temperature monitor for Google Glass.
