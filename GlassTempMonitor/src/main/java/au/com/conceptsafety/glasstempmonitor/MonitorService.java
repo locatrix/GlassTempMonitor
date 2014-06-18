@@ -46,6 +46,10 @@ public class MonitorService extends Service {
 
     @Override
     public void onDestroy() {
+        if (renderer != null) {
+            renderer.stopUpdating();
+        }
+
         if (liveCard != null && liveCard.isPublished()) {
             liveCard.unpublish();
             liveCard = null;

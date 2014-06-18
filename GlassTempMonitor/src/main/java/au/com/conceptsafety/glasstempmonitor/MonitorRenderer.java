@@ -21,22 +21,29 @@ public class MonitorRenderer implements DirectRenderingCallback, MonitorView.Lis
         monitorView = new MonitorView(context);
     }
 
+    public void stopUpdating() {
+        monitorView.stopMonitoring();
+    }
+
     @Override
     public void renderingPaused(SurfaceHolder surfaceHolder, boolean paused) {
-        rendering = paused;
-        updateRenderingState();
+        Log.d(TAG, "rendering paused = " + paused);
+        rendering = !paused;
+        update();
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        Log.d(TAG, "surface created");
         rendering = true;
         this.surfaceHolder = surfaceHolder;
-
-        updateRenderingState();
+        update();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int width, int height) {
+        Log.d(TAG, "surface changed");
+
         int measuredWidth = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
         int measuredHeight = View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY);
 
@@ -47,16 +54,9 @@ public class MonitorRenderer implements DirectRenderingCallback, MonitorView.Lis
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        Log.d(TAG, "surface destroyed");
         this.surfaceHolder = null;
-        updateRenderingState();
-    }
-
-    private void updateRenderingState() {
-        if (surfaceHolder != null && rendering) {
-            monitorView.setListener(this);
-        } else {
-            monitorView.setListener(null);
-        }
+        update();
     }
 
     public void tempUpdated() {
@@ -77,6 +77,14 @@ public class MonitorRenderer implements DirectRenderingCallback, MonitorView.Lis
         if (canvas != null) {
             view.draw(canvas);
             surfaceHolder.unlockCanvasAndPost(canvas);
+        }
+    }
+
+    private void update() {
+        if (rendering && surfaceHolder != null) {
+            monitorView.setListener(this);
+        } else {
+            monitorView.setListener(null);
         }
     }
 }
