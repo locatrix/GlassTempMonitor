@@ -6,6 +6,11 @@
     android:layout_height="match_parent"
     android:background="@color/black" >
 
+    <au.com.conceptsafety.glasstempmonitor.LineGraphView
+        android:id="@+id/lineGraph"
+        android:layout_width="430px"
+        android:layout_height="360px" />
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -35,6 +40,8 @@
             android:text="30"/>
 
     </LinearLayout>
+
+
 
 
 
