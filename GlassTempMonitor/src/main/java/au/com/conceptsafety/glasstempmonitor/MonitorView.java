@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
@@ -16,7 +17,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -26,7 +31,7 @@ public class MonitorView extends FrameLayout {
     private static final String TAG = "MonitorView";
     private static final long VISIBLE_UPDATE_DELAY_MILLIS = 1000;
     private static final long ACTIVE_UPDATE_DELAY_MILLIS = 2000;
-    private static final long IDLE_UPDATE_DELAY_MILLIS = 10000;
+    private static final long IDLE_UPDATE_DELAY_MILLIS = 7500;
     private static final String CPU_TEMP_PATH = "/sys/devices/platform/notle_pcb_sensor.0/temperature";
     private static final String BATTERY_TEMP_PATH = "/sys/devices/platform/omap_i2c.1/i2c-1/1-0055/power_supply/bq27520-0/temp";
     private TextView cpuText;
@@ -35,10 +40,11 @@ public class MonitorView extends FrameLayout {
     private Listener listener;
     private Handler handler;
     private PowerManager powerManager;
-    private ArrayList<LineGraphView.Reading> cpuReadings = new ArrayList<>();
-    private ArrayList<LineGraphView.Reading> batteryReadings = new ArrayList<>();
-    private double lowestReading = 9000; // insane defaults that won't be preferred
-    private double highestReading = -9000;
+    private LinkedList<LineGraphView.Reading> cpuReadings = new LinkedList<>();
+    private LinkedList<LineGraphView.Reading> batteryReadings = new LinkedList<>();
+    private double lowestReading = 20; // reasonable enough defaults
+    private double highestReading = 45;
+    private Archiver archiver;
 
     public static interface Listener {
         void tempUpdated();
@@ -60,6 +66,21 @@ public class MonitorView extends FrameLayout {
 
         graph.setSources(sources);
 
+        // set up archiving of this session
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
+        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        File readingsDir = new File(dir, "GlassTempMonitor");
+        File archive = new File(readingsDir, dateFormat.format(new Date()) + "_temps.csv");
+        archive.getParentFile().mkdirs();
+        try {
+            archive.createNewFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        archiver = new Archiver(archive.getPath());
+        archiver.postLine("unixtime,cpu,battery");
+
         handler = new Handler(context.getMainLooper());
         handler.postDelayed(new Runnable() {
             @Override
@@ -70,16 +91,29 @@ public class MonitorView extends FrameLayout {
         }, getUpdateDelay());
     }
 
+    private void trimReadings(LinkedList<LineGraphView.Reading> readings, double min) {
+        while (readings.getFirst().x < min) {
+            readings.removeFirst();
+        }
+    }
+
     public void takeReading() {
         double cpuTemp = getCPUTemperature();
         double batteryTemp = getBatteryTemperature();
         double time = ((double)System.currentTimeMillis()) / 1000.0;
+        lowestReading = Math.min(Math.min(lowestReading, cpuTemp), batteryTemp);
+        highestReading = Math.max(Math.max(highestReading, cpuTemp), batteryTemp);
 
-        Log.d(TAG, "" + time + " - CPU: " + cpuTemp + ", Battery: " + batteryTemp);
+        String readingLine = String.format("%.2f,%.2f,%.2f", time, cpuTemp, batteryTemp);
+        Log.d(TAG, "reading: " + readingLine);
+        archiver.postLine(readingLine);
 
         cpuReadings.add(new LineGraphView.Reading(time, cpuTemp));
         batteryReadings.add(new LineGraphView.Reading(time, batteryTemp));
-        graph.setBounds(time - 180, time);
+        trimReadings(cpuReadings, time - 180);
+        trimReadings(batteryReadings, time - 180);
+
+        graph.setBounds(time - 180, time, lowestReading, highestReading);
         graph.invalidate();
 
         cpuText.setText(formatDegrees(cpuTemp));
@@ -99,8 +133,8 @@ public class MonitorView extends FrameLayout {
         Log.d(TAG, "stopping monitoring");
         handler.removeCallbacksAndMessages(null);
 
-        // write the profile out to a csv file
-        // TODO: this
+        // ensure the full temp archive is written
+        archiver.close();
     }
 
     private String readFirstLine(String path) throws IOException {
